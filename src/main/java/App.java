@@ -1,21 +1,13 @@
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.TelegramBotAdapter;
 import com.pengrad.telegrambot.UpdatesListener;
-import com.pengrad.telegrambot.model.Update;
+import com.pengrad.telegrambot.model.request.Keyboard;
+import com.pengrad.telegrambot.model.request.KeyboardButton;
+import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import libs.helpers.Config;
-import opennlp.tools.namefind.NameFinderME;
-import opennlp.tools.namefind.TokenNameFinderModel;
-import opennlp.tools.tokenize.Tokenizer;
-import opennlp.tools.tokenize.TokenizerME;
-import opennlp.tools.tokenize.TokenizerModel;
-import opennlp.tools.util.Span;
+import libs.telegram.Send;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
 import org.fusesource.jansi.AnsiConsole;
 import static org.fusesource.jansi.Ansi.*;
 import static org.fusesource.jansi.Ansi.Color.*;
@@ -40,7 +32,6 @@ public class App
 
         System.out.println("Token: " + ansi().fg(GREEN).bold().a(telegramToken).reset());
 
-
         TelegramBot bot = TelegramBotAdapter.build(telegramToken);
 
         final Logger logger = LoggerFactory.getLogger(App.class);
@@ -50,30 +41,26 @@ public class App
         bot.setUpdatesListener(updates -> {
             String newMessageText = updates.get(0).message().text();
             String newMessageSender = updates.get(0).message().from().username();
+            Long chatId = updates.get(0).message().chat().id();
+
             logger.info(updates.toString());
             System.out.println(ansi().fg(GREEN).a("@" + newMessageSender + " sent: ").reset() + newMessageText);
 
-            try {
-                InputStream tokensInputStream = new FileInputStream("opennlp/models/en-token.bin");
-                InputStream nameInputStream = new FileInputStream("opennlp/models/en-ner-person.bin");
+            Send send = new Send(bot);
 
-                TokenizerModel tokenizerModel = new TokenizerModel(tokensInputStream);
-                TokenNameFinderModel nameFinderModel = new TokenNameFinderModel(nameInputStream);
+            send.message("<b>Your Telegram ID is:</b> @" + newMessageSender, chatId);
 
-                nameInputStream.close();
-                tokensInputStream.close();
+            Keyboard keyboard = new ReplyKeyboardMarkup(
+                new KeyboardButton[] {
+                    new KeyboardButton("What is my overall score?"),
+                    new KeyboardButton("I am").requestContact(true),
+                    new KeyboardButton("I am here").requestLocation(true)
+                }
+            )
+            .oneTimeKeyboard(true)
+            .resizeKeyboard(true);
 
-                Tokenizer tokenizer = new TokenizerME(tokenizerModel);
-                NameFinderME nameFinder = new NameFinderME(nameFinderModel);
-
-                String tokens[] = tokenizer.tokenize(newMessageText);
-                Span nameSpans[] = nameFinder.find(tokens);
-                for(Span s: nameSpans)
-                    System.out.println(s.toString());
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            send.message("<b>Your message text was:</b> " + newMessageText, keyboard, chatId);
 
             return UpdatesListener.CONFIRMED_UPDATES_ALL;
         });
