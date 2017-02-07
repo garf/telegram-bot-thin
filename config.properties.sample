@@ -1,2 +1,6 @@
+# Server
+mother.host=127.0.0.1
+mother.port=55800
+
 # Telegram
 telegram.token=SetYourToken
