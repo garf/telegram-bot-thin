@@ -36,7 +36,7 @@ public class Request {
         return this.getBufferContent(reader);
     }
 
-    private String getBufferContent(BufferedReader reader) throws IOException {
+    public String getBufferContent(BufferedReader reader) throws IOException {
         StringBuilder everything = new StringBuilder();
         String line;
 

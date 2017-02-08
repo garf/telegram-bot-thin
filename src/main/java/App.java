@@ -6,6 +6,7 @@ import com.pengrad.telegrambot.model.request.KeyboardButton;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import libs.helpers.Config;
 import libs.telegram.Send;
+import mother.Connect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.fusesource.jansi.AnsiConsole;
@@ -38,31 +39,41 @@ public class App
 
         System.out.println(ansi().bg(GREEN).fg(BLACK).a("Bot started").reset());
 
+        Connect mother = new Connect(config.get("mother.host"), Integer.parseInt(config.get("mother.port")));
+
         bot.setUpdatesListener(updates -> {
             String newMessageText = updates.get(0).message().text();
             String newMessageSender = updates.get(0).message().from().username();
             Long chatId = updates.get(0).message().chat().id();
 
             logger.info(updates.toString());
+
             System.out.println(ansi().fg(GREEN).a("@" + newMessageSender + " sent: ").reset() + newMessageText);
 
             Send send = new Send(bot);
 
             send.message("<b>Your Telegram ID is:</b> @" + newMessageSender, chatId);
 
-            Keyboard keyboard = new ReplyKeyboardMarkup(
-                new KeyboardButton[] {
-                    new KeyboardButton("What is my overall score?"),
-                    new KeyboardButton("I am").requestContact(true),
-                    new KeyboardButton("I am here").requestLocation(true)
-                }
-            )
-            .oneTimeKeyboard(true)
-            .resizeKeyboard(true);
+            send.message("<b>Your message text was:</b> " + newMessageText, chatId);
 
-            send.message("<b>Your message text was:</b> " + newMessageText, keyboard, chatId);
+            String motherResponseText = mother.send(newMessageText);
+
+            send.message("<b>Response from mother:</b> " + motherResponseText, App.getDummyKeyboard(), chatId);
+
+            System.out.println("Mother responded: " + motherResponseText);
 
             return UpdatesListener.CONFIRMED_UPDATES_ALL;
         });
+    }
+
+    private static Keyboard getDummyKeyboard() {
+        return new ReplyKeyboardMarkup (
+            new KeyboardButton[] {
+                    new KeyboardButton("What is my overall score?"),
+                    new KeyboardButton("Portals list")
+            }
+        )
+        .oneTimeKeyboard(true)
+        .resizeKeyboard(true);
     }
 }
