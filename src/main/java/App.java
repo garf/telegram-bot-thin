@@ -5,11 +5,17 @@ import com.pengrad.telegrambot.model.request.Keyboard;
 import com.pengrad.telegrambot.model.request.KeyboardButton;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import libs.helpers.Config;
-import libs.telegram.Send;
+import dto.socket.MotherMessage;
+import telegram.Send;
 import mother.Connect;
+import dto.socket.ClientMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.fusesource.jansi.AnsiConsole;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.fusesource.jansi.Ansi.*;
 import static org.fusesource.jansi.Ansi.Color.*;
 
@@ -20,8 +26,7 @@ public class App
 
         Config config = new Config("./config.properties");
 
-        String key = "telegram.token";
-        String telegramToken = config.get(key);
+        String telegramToken = config.get("telegram.token");
 
         Boolean isTokenSet = telegramToken != null && !telegramToken.equals("SetYourToken");
 
@@ -52,27 +57,39 @@ public class App
 
             Send send = new Send(bot);
 
-            send.message("<b>Your Telegram ID is:</b> @" + newMessageSender, chatId);
+            if (newMessageSender == null) {
+                send.message("Your username is not set. Please, do it in settings of Telegram Messenger.", chatId);
+                return UpdatesListener.CONFIRMED_UPDATES_ALL;
+            }
 
-            send.message("<b>Your message text was:</b> " + newMessageText, chatId);
+            ClientMessage clientMessage = new ClientMessage();
 
-            String motherResponseText = mother.send(newMessageText);
+            clientMessage.setText(newMessageText)
+                    .setSenderId(newMessageSender)
+                    .setChatId(chatId.toString());
 
-            send.message("<b>Response from mother:</b> " + motherResponseText, App.getDummyKeyboard(), chatId);
+            MotherMessage motherResponse = mother.send(clientMessage);
 
-            System.out.println("Mother responded: " + motherResponseText);
+            send.message(
+                motherResponse.getText(),
+                App.makeKeyboard(motherResponse.getKeyboard()),
+                chatId
+            );
 
             return UpdatesListener.CONFIRMED_UPDATES_ALL;
         });
     }
 
-    private static Keyboard getDummyKeyboard() {
-        return new ReplyKeyboardMarkup (
-            new KeyboardButton[] {
-                    new KeyboardButton("What is my overall score?"),
-                    new KeyboardButton("Portals list")
-            }
-        )
+    private static Keyboard makeKeyboard(String[] keys) {
+        List<KeyboardButton> buttons = new ArrayList<>();
+
+        for (String key: keys) {
+            buttons.add(new KeyboardButton(key));
+        }
+
+        KeyboardButton[] buttonsArray = buttons.toArray(new KeyboardButton[buttons.size()]);
+
+        return new ReplyKeyboardMarkup(buttonsArray)
         .oneTimeKeyboard(true)
         .resizeKeyboard(true);
     }
