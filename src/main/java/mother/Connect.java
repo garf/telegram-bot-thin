@@ -26,11 +26,7 @@ public class Connect {
 
             out.writeObject(clientMessage);
 
-            MotherMessage response = (MotherMessage) in.readObject();
-
-            System.out.println(response.getText());
-
-            return response;
+            return (MotherMessage) in.readObject();
         } catch  (IOException e) {
             System.out.println("I/O error: " + e.getMessage());
             System.out.println("Retry connection");

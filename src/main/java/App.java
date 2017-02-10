@@ -6,6 +6,7 @@ import com.pengrad.telegrambot.model.request.KeyboardButton;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import libs.helpers.Config;
 import dto.socket.MotherMessage;
+import telegram.Formatter;
 import telegram.Send;
 import mother.Connect;
 import dto.socket.ClientMessage;
@@ -51,8 +52,6 @@ public class App
             String newMessageSender = updates.get(0).message().from().username();
             Long chatId = updates.get(0).message().chat().id();
 
-            logger.info(updates.toString());
-
             System.out.println(ansi().fg(GREEN).a("@" + newMessageSender + " sent: ").reset() + newMessageText);
 
             Send send = new Send(bot);
@@ -70,17 +69,15 @@ public class App
 
             MotherMessage motherResponse = mother.send(clientMessage);
 
-            send.message(
-                motherResponse.getText(),
-                App.makeKeyboard(motherResponse.getKeyboard()),
-                chatId
-            );
+            send.message(Formatter.format(motherResponse.getText()), chatId);
+
+            send.message("", App.makeKeyboard(motherResponse.getKeyboard()), chatId);
 
             return UpdatesListener.CONFIRMED_UPDATES_ALL;
         });
     }
 
-    private static Keyboard makeKeyboard(String[] keys) {
+    private static ReplyKeyboardMarkup makeKeyboard(String[] keys) {
         List<KeyboardButton> buttons = new ArrayList<>();
 
         for (String key: keys) {
