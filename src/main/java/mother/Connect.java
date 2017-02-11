@@ -10,7 +10,7 @@ import java.net.UnknownHostException;
 public class Connect {
     private String host;
     private int port;
-    private Socket socket;
+    private Socket socket = null;
     private int connectTries = 0;
 
     public Connect(String host, int port) {
@@ -28,12 +28,10 @@ public class Connect {
 
             return (MotherMessage) in.readObject();
         } catch  (IOException e) {
-            System.out.println("I/O error: " + e.getMessage());
-            System.out.println("Retry connection");
+            System.out.println("I/O error sending: " + e.getMessage());
+            System.out.println("Retry connection " + (this.connectTries + 1));
 
             if (this.connectTries < 5) {
-                this.connectTries++;
-
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException e1) {
@@ -55,13 +53,17 @@ public class Connect {
 
     public Connect connect() {
         try {
+            this.connectTries++;
             this.socket = new Socket(this.host, this.port);
-            this.connectTries = 0;
         } catch (UnknownHostException e) {
             System.out.println("Unknown host: " + this.host);
-        } catch  (IOException e) {
-            System.out.println("I/O error: " + e.getMessage());
+            return this;
+        } catch (IOException e) {
+            System.out.println("I/O error connecting: " + e.getMessage());
+            return this;
         }
+
+        this.connectTries = 0;
         System.out.println(String.format("Connected to server %s:%d", this.host, this.port));
 
         return this;

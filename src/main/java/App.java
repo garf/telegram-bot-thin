@@ -49,17 +49,10 @@ public class App
 
         bot.setUpdatesListener(updates -> {
             String newMessageText = updates.get(0).message().text();
-            String newMessageSender = updates.get(0).message().from().username();
+            String newMessageSender = updates.get(0).message().from().id().toString();
             Long chatId = updates.get(0).message().chat().id();
 
-            System.out.println(ansi().fg(GREEN).a("@" + newMessageSender + " sent: ").reset() + newMessageText);
-
             Send send = new Send(bot);
-
-            if (newMessageSender == null) {
-                send.message("Your username is not set. Please, do it in settings of Telegram Messenger.", chatId);
-                return UpdatesListener.CONFIRMED_UPDATES_ALL;
-            }
 
             ClientMessage clientMessage = new ClientMessage();
 
